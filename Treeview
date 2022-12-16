@@ -1,0 +1,89 @@
+<!-- HTML template -->
+<div id="treeview-container"></div>
+
+<!-- Add search input and button -->
+<form action="/search" method="post">
+  {{ form.hidden_tag() }}
+  <input type="text" id="search-input" placeholder="Search...">
+  <button id="search-button">Search</button>
+  <!-- Add hidden field for storing the selected nodes -->
+  <input type="hidden" name="selected_nodes" id="selected-nodes">
+</form>
+
+<!-- AdminLTE CSS -->
+<link rel="stylesheet" href="/path/to/admin-lte/bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="/path/to/admin-lte/bower_components/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/path/to/admin-lte/bower_components/Ionicons/css/ionicons.min.css">
+<link rel="stylesheet" href="/path/to/admin-lte/dist/css/AdminLTE.min.css">
+<link rel="stylesheet" href="/path/to/admin-lte/dist/css/skins/_all-skins.min.css">
+
+<!-- Include jQuery Tree CSS file -->
+<link rel="stylesheet" href="/path/to/jquery-tree/dist/jquery.tree.min.css">
+
+<!-- Include custom stylesheet -->
+<link rel="stylesheet" href="/path/to/custom.css">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-tree@2.2.0/dist/jquery.tree.min.js"></script>
+
+<script>
+  // JavaScript code
+ $(document).ready(function() {
+  // Fetch data from external API
+  $.get('/api/treeview-data', function(data) {
+    // Initialize treeview with multiselect and cascade selection options
+    $('#treeview-container').tree({
+      data: data,
+      multiSelect: true,
+      cascadeSelect: true,
+      // Add search functionality with cascade search enabled
+      search: {
+        input: $('#search-input'),
+        button: $('#search-button'),
+        cascadeSearch: true
+      }
+    });
+
+    // Debounce the search function to reduce the number of requests sent to the server
+    var debouncedSearch = debounce(function() {
+      // Get the selected nodes from the treeview
+      var selectedNodes = $('#treeview-container').tree('get_selected');
+
+      // Convert the selected nodes to a JSON string and update the hidden field
+      $('#selected-nodes').val(JSON.stringify(selectedNodes));
+    }, 500);
+
+    // Trigger the search as the user types
+    $('#search-input').keyup(debouncedSearch);
+  });
+});
+
+// Debounce function to reduce the number of requests sent to the server
+function debounce(func, wait) {
+  var timeout;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      func.apply(context, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+      // Update the hidden field with the selected nodes when the search button is clicked
+      $('#search-button').click(function() {
+        // Get the selected nodes from the treeview
+        var selectedNodes = $('#treeview-container').tree('get_selected');
+
+        // Convert the selected nodes to a JSON string and update the hidden field
+        $('#selected-nodes').val(JSON.stringify(selectedNodes));
+      });
+    });
+  });
+</script>
+
+
+
+
