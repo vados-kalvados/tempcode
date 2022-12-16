@@ -87,3 +87,54 @@ function debounce(func, wait) {
 
 
 
+
+
+<!-- HTML template -->
+<div id="treeview-container"></div>
+
+<!-- Add search input and button -->
+<form action="/search" method="post">
+  {{ form.hidden_tag() }}
+  <input type="text" id="search-input" placeholder="Search...">
+  <button id="search-button">Search</button>
+  <!-- Add hidden field for storing the selected nodes -->
+  <input type="hidden" name="selected_nodes" id="selected-nodes">
+</form>
+
+<!-- Include jstree CSS and JavaScript files -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+
+<!-- Include custom stylesheet -->
+<link rel="stylesheet" href="/path/to/custom.css">
+
+<script>
+  // JavaScript code
+  $(document).ready(function() {
+    // Fetch data from external API
+    $.get('/api/treeview-data', function(data) {
+      // Initialize treeview with multiselect and cascade selection options
+      $('#treeview-container').jstree({
+        "core" : {
+          "data" : data,
+          "multiple" : true,
+          "check_callback" : true,
+        },
+        "search" : {
+          "input" : $('#search-input'),
+          "case_insensitive" : true,
+          "show_only_matches" : true
+        }
+      });
+
+      // Update the hidden field with the selected nodes when the search button is clicked
+      $('#search-button').click(function() {
+        // Get the selected nodes from the treeview
+        var selectedNodes = $('#treeview-container').jstree('get_selected');
+
+        // Convert the selected nodes to a JSON string and update the hidden field
+        $('#selected-nodes').val(JSON.stringify(selectedNodes));
+      });
+    });
+  });
+</script>
