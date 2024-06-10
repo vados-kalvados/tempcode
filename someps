@@ -54,4 +54,25 @@ $cutoffDate = $now.AddDays(-$Days)
 try {
     $folders = Get-ChildItem -Path $Folder -Directory -Recurse -Force
 } catch {
-   
+    Write-Error "Failed to get folders. Error: $_"
+    exit 1
+}
+
+foreach ($folder in $folders) {
+    if ($folder -ne $null -and $folder.PSIsContainer) {
+        # Check if the folder name contains a date pattern matching the last working day
+        if (-not (ContainsLastWorkingDay $folder.Name)) {
+            # Get the last write time of the folder
+            if ($folder.LastWriteTime -lt $cutoffDate) {
+                try {
+                    Remove-Item -Path $folder.FullName -Recurse -Force -ErrorAction Stop
+                    Write-Output "Deleted folder: $($folder.FullName)"
+                } catch {
+                    Write-Warning "Failed to delete folder: $($folder.FullName). Error: $_"
+                }
+            }
+        }
+    } else {
+        Write-Warning "Skipped invalid folder: $($folder.FullName)"
+    }
+}
