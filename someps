@@ -21,8 +21,8 @@ function Get-LastWorkingDay {
     return $lastWorkingDay
 }
 
-# Function to check if the filename or foldername matches the pattern for the last working day
-function IsLastWorkingDay {
+# Function to check if the filename or foldername contains a date pattern matching the last working day
+function ContainsLastWorkingDay {
     param (
         [string]$name
     )
@@ -51,16 +51,16 @@ $items = Get-ChildItem -Path $Folder -Recurse
 
 foreach ($item in $items) {
     if ($item.PSIsContainer) {
-        # Check if the folder name contains a date pattern
-        if (-not (IsLastWorkingDay $item.Name)) {
+        # Check if the folder name contains a date pattern matching the last working day
+        if (-not (ContainsLastWorkingDay $item.Name)) {
             # Get the last write time of the folder
             if ($item.LastWriteTime -lt $cutoffDate) {
                 Remove-Item -Path $item.FullName -Recurse -Force
             }
         }
     } else {
-        # Check if the file name contains a date pattern
-        if (-not (IsLastWorkingDay $item.Name)) {
+        # Check if the file name contains a date pattern matching the last working day
+        if (-not (ContainsLastWorkingDay $item.Name)) {
             # Get the last write time of the file
             if ($item.LastWriteTime -lt $cutoffDate) {
                 Remove-Item -Path $item.FullName -Force
