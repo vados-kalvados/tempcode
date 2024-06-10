@@ -50,6 +50,11 @@ $now = Get-Date
 # Calculate the cutoff date
 $cutoffDate = $now.AddDays(-$Days)
 
+# Convert the provided folder path to an absolute path
+$Folder = Convert-Path $Folder
+
+Write-Output "Using folder: $Folder"
+
 # Get all folders recursively
 try {
     $folders = Get-ChildItem -Path $Folder -Directory -Recurse -Force
@@ -60,27 +65,24 @@ try {
 
 foreach ($folder in $folders) {
     if ($folder -ne $null) {
-        Write-Output "Processing folder: $($folder.FullName)"
+        Write-Output "Processing folder: $($folder.Name)"
 
-        if ($folder.PSIsContainer) {
-            # Check if the folder name contains a date pattern matching the last working day
-            if (-not (ContainsLastWorkingDay $folder.Name)) {
-                # Get the last write time of the folder
-                if ($folder.LastWriteTime -lt $cutoffDate) {
-                    try {
-                        Remove-Item -Path $folder.FullName -Recurse -Force -ErrorAction Stop
-                        Write-Output "Deleted folder: $($folder.FullName)"
-                    } catch {
-                        Write-Warning "Failed to delete folder: $($folder.FullName). Error: $_"
-                    }
-                } else {
-                    Write-Output "Folder $($folder.FullName) is newer than the cutoff date."
+        # Check if the folder name contains a date pattern matching the last working day
+        if ($folder.Name -match '\d{4}-\d{2}-\d{2}' -and -not (ContainsLastWorkingDay $folder.Name)) {
+            $folderPath = Join-Path -Path $Folder -ChildPath $folder.Name
+            # Get the last write time of the folder
+            if ($folder.LastWriteTime -lt $cutoffDate) {
+                try {
+                    Remove-Item -Path $folderPath -Recurse -Force -ErrorAction Stop
+                    Write-Output "Deleted folder: $($folderPath)"
+                } catch {
+                    Write-Warning "Failed to delete folder: $($folderPath). Error: $_"
                 }
             } else {
-                Write-Output "Folder $($folder.FullName) matches the last working day pattern."
+                Write-Output "Folder $($folderPath) is newer than the cutoff date."
             }
         } else {
-            Write-Warning "Item is not a container: $($folder.FullName)"
+            Write-Output "Skipping folder $($folder.Name) as it does not match the expected date pattern or matches the last working day pattern."
         }
     } else {
         Write-Warning "Skipped null folder item."
