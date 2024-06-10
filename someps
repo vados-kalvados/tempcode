@@ -30,7 +30,11 @@ function ContainsLastWorkingDay {
     $datePattern = "\d{4}-\d{2}-\d{2}"
     if ($name -match $datePattern) {
         $dateStr = $matches[0]
-        $date = [datetime]::ParseExact($dateStr, 'yyyy-MM-dd', $null)
+        try {
+            $date = [datetime]::ParseExact($dateStr, 'yyyy-MM-dd', $null)
+        } catch {
+            return $false
+        }
 
         $lastWorkingDay = Get-LastWorkingDay $date
 
@@ -47,23 +51,35 @@ $now = Get-Date
 $cutoffDate = $now.AddDays(-$Days)
 
 # Get all files and folders recursively
-$items = Get-ChildItem -Path $Folder -Recurse
+$items = Get-ChildItem -Path $Folder -Recurse -Force
 
 foreach ($item in $items) {
-    if ($item.PSIsContainer) {
-        # Check if the folder name contains a date pattern matching the last working day
-        if (-not (ContainsLastWorkingDay $item.Name)) {
-            # Get the last write time of the folder
-            if ($item.LastWriteTime -lt $cutoffDate) {
-                Remove-Item -Path $item.FullName -Recurse -Force
+    if ($item -is [System.IO.FileInfo] -or $item -is [System.IO.DirectoryInfo]) {
+        if ($item.PSIsContainer) {
+            # Check if the folder name contains a date pattern matching the last working day
+            if (-not (ContainsLastWorkingDay $item.Name)) {
+                # Get the last write time of the folder
+                if ($item.LastWriteTime -lt $cutoffDate) {
+                    try {
+                        Remove-Item -Path $item.FullName -Recurse -Force -ErrorAction Stop
+                        Write-Output "Deleted folder: $($item.FullName)"
+                    } catch {
+                        Write-Warning "Failed to delete folder: $($item.FullName). Error: $_"
+                    }
+                }
             }
-        }
-    } else {
-        # Check if the file name contains a date pattern matching the last working day
-        if (-not (ContainsLastWorkingDay $item.Name)) {
-            # Get the last write time of the file
-            if ($item.LastWriteTime -lt $cutoffDate) {
-                Remove-Item -Path $item.FullName -Force
+        } else {
+            # Check if the file name contains a date pattern matching the last working day
+            if (-not (ContainsLastWorkingDay $item.Name)) {
+                # Get the last write time of the file
+                if ($item.LastWriteTime -lt $cutoffDate) {
+                    try {
+                        Remove-Item -Path $item.FullName -Force -ErrorAction Stop
+                        Write-Output "Deleted file: $($item.FullName)"
+                    } catch {
+                        Write-Warning "Failed to delete file: $($item.FullName). Error: $_"
+                    }
+                }
             }
         }
     }
