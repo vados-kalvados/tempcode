@@ -1,0 +1,70 @@
+param (
+    [string]$Folder,
+    [int]$Days
+)
+
+# Function to get the last working day of a given month
+function Get-LastWorkingDay {
+    param (
+        [datetime]$date
+    )
+
+    # Get the last day of the month
+    $lastDay = [datetime]::DaysInMonth($date.Year, $date.Month)
+    $lastWorkingDay = Get-Date -Year $date.Year -Month $date.Month -Day $lastDay
+
+    # Adjust if the last day is a weekend (Saturday/Sunday)
+    while ($lastWorkingDay.DayOfWeek -eq 'Saturday' -or $lastWorkingDay.DayOfWeek -eq 'Sunday') {
+        $lastWorkingDay = $lastWorkingDay.AddDays(-1)
+    }
+
+    return $lastWorkingDay
+}
+
+# Function to check if the filename or foldername matches the pattern for the last working day
+function IsLastWorkingDay {
+    param (
+        [string]$name
+    )
+
+    $datePattern = "\d{4}-\d{2}-\d{2}"
+    if ($name -match $datePattern) {
+        $dateStr = $matches[0]
+        $date = [datetime]::ParseExact($dateStr, 'yyyy-MM-dd', $null)
+
+        $lastWorkingDay = Get-LastWorkingDay $date
+
+        return $date -eq $lastWorkingDay
+    }
+
+    return $false
+}
+
+# Get the current date
+$now = Get-Date
+
+# Calculate the cutoff date
+$cutoffDate = $now.AddDays(-$Days)
+
+# Get all files and folders recursively
+$items = Get-ChildItem -Path $Folder -Recurse
+
+foreach ($item in $items) {
+    if ($item.PSIsContainer) {
+        # Check if the folder name contains a date pattern
+        if (-not (IsLastWorkingDay $item.Name)) {
+            # Get the last write time of the folder
+            if ($item.LastWriteTime -lt $cutoffDate) {
+                Remove-Item -Path $item.FullName -Recurse -Force
+            }
+        }
+    } else {
+        # Check if the file name contains a date pattern
+        if (-not (IsLastWorkingDay $item.Name)) {
+            # Get the last write time of the file
+            if ($item.LastWriteTime -lt $cutoffDate) {
+                Remove-Item -Path $item.FullName -Force
+            }
+        }
+    }
+}
