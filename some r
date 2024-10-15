@@ -1,26 +1,10 @@
-# Sample data
-reportstylesettings <- data.frame(
-  Name = c("PNL", "Risk"),
-  Parameters = c("Label#Filter#Env#Date#SomeStuff", "LabelRisk#FilterRisk#EnvRisk#Date#OtherStuff"),
+# Sample data for tail parameters
+tail_parameters <- data.frame(
+  Column1 = c("someA", "someB", "someC", "someD"),
   stringsAsFactors = FALSE
 )
 
-regionalsettings <- data.frame(
-  Business = c("somebusiness", "asdsadbusiness"),
-  Mode = c("somemode", "asdsomemode"),
-  Region = c("someregion", "dassomeregion"),
-  Label = c("somelabel", "dasomelabel"),
-  Filter = c("somefilter", "dsasomefilter"),
-  Env = c("someenv", "dassomeenv"),
-  SomeStuff = c("someSomeStuff", "dassomeSomeStuff"),
-  LabelRisk = c("someLabelRisk", "dsasomeLabelRisk"),
-  FilterRisk = c("sasdfFilterRisk", "dassasdfFilterRisk"),
-  EnvRisk = c("fadsfasdaEnvRisk", "dasfadsfasdaEnvRisk"),
-  OtherStuff = c("fasdfdsaOtherStuff", "dsafasdfdsaOtherStuff"),
-  stringsAsFactors = FALSE
-)
-
-# Function to generate the dynamic SQL query
+# Function to generate the dynamic SQL query with tail parameters
 generate_query <- function(report_style, business, mode, region, date) {
   # Filter the regional settings table
   regional_row <- regionalsettings[
@@ -48,8 +32,13 @@ generate_query <- function(report_style, business, mode, region, date) {
     }
   })
   
+  # Add the tail parameters to the where clause
+  tail_clauses <- sapply(tail_parameters$Column1, function(param) {
+    return(paste0(param, "='", param, "'"))
+  })
+  
   # Combine the WHERE clauses into a single string
-  where_clause <- paste(where_clauses, collapse = " and ")
+  where_clause <- paste(c(where_clauses, tail_clauses), collapse = " and ")
   
   # Construct the final SQL query string
   query <- paste0("SELECT * FROM somedummytable WHERE ", where_clause)
