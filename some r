@@ -1,0 +1,70 @@
+# Sample data
+reportstylesettings <- data.frame(
+  Name = c("PNL", "Risk"),
+  Parameters = c("Label#Filter#Env#Date#SomeStuff", "LabelRisk#FilterRisk#EnvRisk#Date#OtherStuff"),
+  stringsAsFactors = FALSE
+)
+
+regionalsettings <- data.frame(
+  Business = c("somebusiness", "asdsadbusiness"),
+  Mode = c("somemode", "asdsomemode"),
+  Region = c("someregion", "dassomeregion"),
+  Label = c("somelabel", "dasomelabel"),
+  Filter = c("somefilter", "dsasomefilter"),
+  Env = c("someenv", "dassomeenv"),
+  SomeStuff = c("someSomeStuff", "dassomeSomeStuff"),
+  LabelRisk = c("someLabelRisk", "dsasomeLabelRisk"),
+  FilterRisk = c("sasdfFilterRisk", "dassasdfFilterRisk"),
+  EnvRisk = c("fadsfasdaEnvRisk", "dasfadsfasdaEnvRisk"),
+  OtherStuff = c("fasdfdsaOtherStuff", "dsafasdfdsaOtherStuff"),
+  stringsAsFactors = FALSE
+)
+
+# Function to generate the dynamic SQL query
+generate_query <- function(report_style, business, mode, region, date) {
+  # Filter the regional settings table
+  regional_row <- regionalsettings[
+    regionalsettings$Business == business &
+    regionalsettings$Mode == mode &
+    regionalsettings$Region == region, ]
+  
+  # Filter the report style settings
+  report_row <- reportstylesettings[reportstylesettings$Name == report_style, ]
+  
+  if (nrow(regional_row) == 0 || nrow(report_row) == 0) {
+    stop("No matching record found in the tables.")
+  }
+  
+  # Extract the parameters required for the report style
+  parameters <- unlist(strsplit(report_row$Parameters, "#"))
+  
+  # Construct the SQL WHERE conditions based on the parameters
+  where_clauses <- sapply(parameters, function(param) {
+    if (param == "Date") {
+      return(paste0(param, "='", date, "'"))
+    } else {
+      value <- regional_row[[param]]
+      return(paste0(param, "='", value, "'"))
+    }
+  })
+  
+  # Combine the WHERE clauses into a single string
+  where_clause <- paste(where_clauses, collapse = " and ")
+  
+  # Construct the final SQL query string
+  query <- paste0("SELECT * FROM somedummytable WHERE ", where_clause)
+  
+  return(query)
+}
+
+# Example usage
+query <- generate_query(
+  report_style = "PNL", 
+  business = "somebusiness", 
+  mode = "somemode", 
+  region = "someregion", 
+  date = "2024-05-12"
+)
+
+# Output the query
+print(query)
