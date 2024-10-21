@@ -1,0 +1,20 @@
+# Sample data
+df <- data.frame(column = '"Some1":"One1";"Some2":"Two2"')
+
+# Split the string into individual key-value pairs
+pairs <- unlist(strsplit(as.character(df$column), ";"))
+
+# Initialize empty vectors for keys and values
+keys <- c()
+values <- c()
+
+# Loop through each pair and split into key and value
+for (pair in pairs) {
+  # Remove double quotes and split by ":"
+  parts <- strsplit(gsub('"', '', pair), ":")[[1]]
+  keys <- c(keys, parts[1])
+  values <- c(values, parts[2])
+}
+
+# Create the final dataframe
+result_df <- data.frame(Key = keys, Value = values)
