@@ -1,0 +1,96 @@
+df <- data.frame(
+  A = c(1, 2),
+  B = c(NA, 3),
+  C = c(2, 3),
+  D = c(3, 4),
+  E = c(4, 0)
+)
+
+# Function to process the dataframe in chunks of 1000 records
+process_in_chunks <- function(df, chunk_size = 1000) {
+  # Define an empty dataframe to store the results
+  final_df <- data.frame(AllDims = character(), stringsAsFactors = FALSE)
+  
+  # Replace NA values
+  df[] <- lapply(df, function(x) {
+    if (is.character(x)) {
+      x[is.na(x)] <- ""  # Replace NA with empty string for characters
+    } else if (is.numeric(x)) {
+      x[is.na(x)] <- 0   # Replace NA with 0 for numeric columns
+    }
+    return(x)
+  })
+  
+  # First, add the column names as the first row
+  column_names <- paste(names(df), collapse = "#")
+  final_df <- rbind(final_df, data.frame(AllDims = column_names, stringsAsFactors = FALSE))
+  
+  # Process the dataframe in chunks
+  n <- nrow(df)
+  for (i in seq(1, n, by = chunk_size)) {
+    chunk <- df[i:min(i + chunk_size - 1, n), ]
+    
+    # Convert each row into a string separated by '#'
+    AllDims <- apply(chunk, 1, function(row) {
+      paste(row, collapse = "#")
+    })
+    
+    # Combine into the final dataframe
+    final_df <- rbind(final_df, data.frame(AllDims = AllDims, stringsAsFactors = FALSE))
+  }
+  
+  return(final_df)
+}
+
+# Call the function
+result <- process_in_chunks(df, chunk_size = 1000)
+
+# View the result
+print(result)
+
+
+
+
+
+
+
+# Sample encoded dataframe (as produced by the previous step)
+encoded_df <- data.frame(
+  AllDims = c("A#B#C#D#E", "1##2#3#4", "2#3#3#4#0"),
+  stringsAsFactors = FALSE
+)
+
+# Function to decode the # separated strings back into a dataframe
+decode_to_dataframe <- function(encoded_df) {
+  # Extract the first row as column names
+  column_names <- strsplit(encoded_df$AllDims[1], "#")[[1]]
+  
+  # Extract the rest of the rows as data
+  data_rows <- encoded_df$AllDims[-1]
+  
+  # Split each row by "#" and convert it to a list of values
+  data_list <- strsplit(data_rows, "#")
+  
+  # Convert the list to a dataframe
+  decoded_df <- as.data.frame(do.call(rbind, data_list), stringsAsFactors = FALSE)
+  
+  # Set the column names
+  names(decoded_df) <- column_names
+  
+  # Convert numeric columns back to numeric type if needed
+  decoded_df[] <- lapply(decoded_df, function(col) {
+    if (suppressWarnings(all(!is.na(as.numeric(col))))) {
+      return(as.numeric(col))
+    } else {
+      return(col)
+    }
+  })
+  
+  return(decoded_df)
+}
+
+# Call the function to decode
+decoded_df <- decode_to_dataframe(encoded_df)
+
+# View the result
+print(decoded_df)
