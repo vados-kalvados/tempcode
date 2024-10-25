@@ -94,3 +94,39 @@ decoded_df <- decode_to_dataframe(encoded_df)
 
 # View the result
 print(decoded_df)
+
+
+
+
+
+
+
+
+# Step 1: Ensure all columns have the correct data type
+df[] <- lapply(df, function(x) {
+  if (all(is.na(x)) || is.character(x)) {
+    return(as.character(x))  # Force character type
+  } else if (is.numeric(x) && !inherits(x, "Date") && !inherits(x, "POSIXct")) {
+    return(as.numeric(x))  # Force numeric type (double or integer)
+  } else if (inherits(x, "Date")) {
+    return(as.Date(x))  # Ensure Date type
+  } else if (inherits(x, "POSIXct")) {
+    return(as.POSIXct(x, tz = "UTC"))  # Ensure POSIXct datetime type
+  } else {
+    return(x)  # Return as-is for other types
+  }
+})
+
+# Step 2: Replace NA values
+df[] <- lapply(df, function(x) {
+  if (is.character(x)) {
+    x[is.na(x)] <- ""  # Replace NA with empty string for characters
+  } else if (is.numeric(x)) {
+    x[is.na(x)] <- 0  # Replace NA with 0 for numeric columns
+  } else if (inherits(x, "Date")) {
+    x[is.na(x)] <- as.Date("1970-01-01")  # Replace NA with default date
+  } else if (inherits(x, "POSIXct")) {
+    x[is.na(x)] <- as.POSIXct("1970-01-01 00:00:00", tz = "UTC")  # Default datetime for POSIXct
+  }
+  return(x)
+})
