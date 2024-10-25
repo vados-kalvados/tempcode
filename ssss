@@ -174,3 +174,15 @@ df[] <- lapply(df, function(x) {
     return(x)  # For any other types, return as-is
   }
 })
+
+
+
+
+df[] <- lapply(df, function(x) {
+  if (is.list(x)) {
+    return(unlist(x, use.names = FALSE))  
+  } else {
+    return(x)  # Return other types as is
+  }
+})
+
