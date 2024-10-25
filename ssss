@@ -200,6 +200,7 @@ df[] <- lapply(names(df), function(col_name) {
   } else if (inherits(x, "Date")) {
     x[is.na(x)] <- as.Date("1970-01-01")  # Replace NA with a default date
   } else if (inherits(x, "POSIXct")) {
+    # Replace NA with a default datetime, ensuring to specify the origin
     x[is.na(x)] <- as.POSIXct("1970-01-01 00:00:00", tz = "UTC")  # Replace NA with a default datetime
   } else {
     cat("Skipping column:", col_name, "of unsupported type\n")  # For unsupported types
@@ -207,4 +208,3 @@ df[] <- lapply(names(df), function(col_name) {
 
   return(x)  # Return processed column
 })
-
